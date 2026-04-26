@@ -1,0 +1,31 @@
+flowchart LR
+
+%% ===== Actors =====
+User([Utilisateur])
+Doctor([Médecin])
+System([Système IA])
+
+%% ===== User Use Cases =====
+User --> UC1[Créer un compte]
+User --> UC2[Se connecter]
+User --> UC3[Consulter données physiologiques]
+User --> UC4[Gérer contacts d'urgence]
+User --> UC5[Recevoir alertes]
+
+%% ===== Core System =====
+UC6[Enregistrer données physiologiques]
+UC7[Analyser données]
+UC8[Prédire crise d'asthme]
+UC9[Envoyer alerte]
+
+%% ===== Flow =====
+User --> UC6
+UC6 --> System
+System --> UC7
+UC7 --> UC8
+UC8 --> UC9
+UC9 --> User
+
+%% ===== Emergency =====
+UC9 --> UC10[Notifier contacts d'urgence]
+User --> UC10

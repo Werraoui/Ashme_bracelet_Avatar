@@ -1,0 +1,76 @@
+classDiagram
+
+%% =========================
+%% USERS
+%% =========================
+class USERS {
+    +int ID_USER
+    +string LAST_NAME
+    +string FIRST_NAME
+    +string EMAIL
+    +string PHONE
+    +int AGE
+    +string GENDER
+    +string PASS_WORD
+    +timestamp CREATION_DATE
+}
+
+%% =========================
+%% PHYSIO VARIABLES
+%% =========================
+class PHYSIO_VARIABLES {
+    +int ID_PHYSIO
+    +int ID_USER
+    +int SPO2_VALUE
+    +int RR_VALUE
+    +int HR_VALUE
+    +timestamp TIME_OF_RECORD
+}
+
+%% =========================
+%% CONTACTS
+%% =========================
+class CONTACTS {
+    +int ID_CONTACT
+    +int ID_USER
+    +string NAME_CONTACT
+    +string PHONE_CONTACT
+    +string EMAIL_CONTACT
+    +string RELATION
+    +timestamp TIME_OF_CREATION
+}
+
+%% =========================
+%% PREDICTION RESULTS
+%% =========================
+class PREDIC_RESULTS {
+    +int ID_PREDICT
+    +int ID_USER
+    +int ID_PHYSIO
+    +string STATUS_PREDICT
+    +timestamp TIME_OF_CREATION
+}
+
+%% =========================
+%% ALERTES
+%% =========================
+class ALERTES {
+    +int ID_ALERTE
+    +int ID_USER
+    +int ID_PREDICT
+    +int ID_CONTACT
+    +timestamp TIME_OF_ALERT
+}
+
+%% =========================
+%% RELATIONSHIPS
+%% =========================
+
+USERS "1" --> "many" PHYSIO_VARIABLES : has
+USERS "1" --> "many" CONTACTS : has
+USERS "1" --> "many" PREDIC_RESULTS : generates
+USERS "1" --> "many" ALERTES : triggers
+
+PHYSIO_VARIABLES "1" --> "many" PREDIC_RESULTS : used_for
+PREDIC_RESULTS "1" --> "many" ALERTES : triggers
+CONTACTS "1" --> "many" ALERTES : receives
