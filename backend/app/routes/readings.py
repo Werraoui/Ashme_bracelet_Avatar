@@ -4,17 +4,28 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import PhysioVariable
 from app.schemas.readings import ReadingCreate, ReadingOut
+from app.services.reading_service import process_reading
+from app.services.auth_dependencies import get_current_user
+from app.db.models import User
 
 readings_route = APIRouter(prefix="/readings", tags=["readings"])
 
 
 @readings_route.post("", response_model=ReadingOut, status_code=status.HTTP_201_CREATED)
-def add_reading(payload: ReadingCreate, db: Session = Depends(get_db)):
-    reading = PhysioVariable(**payload.model_dump())
-    db.add(reading)
-    db.commit()
-    db.refresh(reading)
-    return reading
+def add_reading(
+    payload: ReadingCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id_user != payload.id_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    # Delegate to the service layer:
+    # - saves reading
+    # - classifies risk
+    # - saves prediction
+    # - creates alert + escalates (very_close stage only)
+    result = process_reading(db, payload)
+    return result.reading
 
 
 @readings_route.get("/latest/{id_user}", response_model=ReadingOut)

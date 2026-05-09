@@ -1,8 +1,10 @@
 import enum
 from sqlalchemy import Column, Integer, String, Text, Enum as SAEnum, ForeignKey, TIMESTAMP, SmallInteger
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
+import uuid
 
 
 # ─────────────────────────────────────────
@@ -129,6 +131,22 @@ class Alerte(Base):
     id_predict    = Column(Integer, ForeignKey("predic_results.id_predict"), nullable=False)
     id_contact    = Column(Integer, ForeignKey("contacts.id_contact"), nullable=False)
     time_of_alert = Column(TIMESTAMP, server_default=func.now())
+
+    # Escalation + notification tracking (added for step-based escalation + SMS)
+    escalation_group_id = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+    stage = Column(SmallInteger, nullable=False, default=1)
+    status = Column(String, nullable=False, default="created")
+
+    provider = Column(String, nullable=True)
+    provider_message_id = Column(String, nullable=True)
+    ack_token = Column(String, unique=True, nullable=True)
+
+    sent_at = Column(TIMESTAMP, nullable=True)
+    delivered_at = Column(TIMESTAMP, nullable=True)
+    failed_at = Column(TIMESTAMP, nullable=True)
+    acknowledged_at = Column(TIMESTAMP, nullable=True)
+    acknowledged_by = Column(String, nullable=True)
+    error_message = Column(Text, nullable=True)
 
     # Relationships
     user          = relationship("User", back_populates="alertes")

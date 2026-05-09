@@ -5,18 +5,25 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import Contact, User
 from app.schemas.contact import ContactCreate, ContactOut, ContactUpdate
+from app.services.auth_dependencies import get_current_user
 
 contacts_route = APIRouter(prefix="/contacts", tags=["contacts"])
 
 
 @contacts_route.post("", response_model=ContactOut, status_code=status.HTTP_201_CREATED)
-def add_contact(payload: ContactCreate, db: Session = Depends(get_db)):
+def add_contact(
+    payload: ContactCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id_user != payload.id_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     user = db.query(User).filter(User.id_user == payload.id_user).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Ensure enums are serialized to their DB values (e.g. "very close")
-    contact = Contact(**payload.model_dump(mode="json"))
+    data = payload.model_dump(mode="json")
+    contact = Contact(**data)
     db.add(contact)
     try:
         db.commit()
@@ -29,7 +36,13 @@ def add_contact(payload: ContactCreate, db: Session = Depends(get_db)):
 
 
 @contacts_route.get("/{id_user}", response_model=list[ContactOut])
-def get_contacts_for_user(id_user: int, db: Session = Depends(get_db)):
+def get_contacts_for_user(
+    id_user: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id_user != id_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return db.query(Contact).filter(Contact.id_user == id_user).all()
 
 

@@ -12,7 +12,8 @@ class UserCreate(BaseModel):
     phone: str = Field(min_length=1)
     age: int = Field(ge=0, le=130)
     gender: GenderEnum
-    pass_word: str = Field(min_length=6)
+    # bcrypt only uses the first 72 bytes; reject longer inputs to avoid confusing behavior.
+    pass_word: str = Field(min_length=6, max_length=72)
 
 
 class UserUpdate(BaseModel):
@@ -26,7 +27,7 @@ class UserUpdate(BaseModel):
 
 class AuthSignin(BaseModel):
     email: EmailStr
-    pass_word: str = Field(min_length=1)
+    pass_word: str = Field(min_length=1, max_length=72)
 
 
 class AuthTokenOut(BaseModel):
