@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from model_utils import load_model, predict_risk
+from AI_model.model_utils import load_model, predict_risk
 
 
 app = FastAPI(
