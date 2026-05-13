@@ -10,6 +10,7 @@ from app.routes.auth import auth_route
 from app.routes.contacts import contacts_route
 from app.routes.readings import readings_route
 from app.routes.users import users_route
+from app.routes.prediction_routes import router as prediction_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,6 +33,7 @@ app.include_router(users_route)
 app.include_router(contacts_route)
 app.include_router(readings_route)
 app.include_router(alerts_route)
+app.include_router(prediction_router)
 
 
 @app.get("/", tags=["health"])
