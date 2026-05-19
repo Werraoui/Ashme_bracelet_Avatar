@@ -53,8 +53,11 @@ class ApiService {
     };
   }
 
-  void _assertSuccess(http.Response response, {int expected = 200}) {
-    if (response.statusCode != expected) {
+  void _assertSuccess(http.Response response, {int? expected}) {
+    final ok = expected != null
+        ? response.statusCode == expected
+        : response.statusCode >= 200 && response.statusCode < 300;
+    if (!ok) {
       String detail = response.body;
       try {
         final decoded = jsonDecode(response.body);

@@ -25,6 +25,7 @@ class AlertOut(BaseModel):
     acknowledged_at: datetime | None = None
     acknowledged_by: str | None = None
     error_message: str | None = None
+    status_predict: str | None = None
 
     model_config = {"from_attributes": True}
 

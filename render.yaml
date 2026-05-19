@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ashme-bracelet-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRES_MINUTES
+        value: "1440"
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SMTP_TLS
+        value: "true"
+      - key: NOTIF_DRY_RUN
+        value: "false"

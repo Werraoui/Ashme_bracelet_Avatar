@@ -3,9 +3,13 @@ name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.136.1",
+    "joblib>=1.4.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "scikit-learn>=1.4.0",
     "python-jose[cryptography]>=3.5.0",
     "psycopg2-binary>=2.9.12",
     "psycopg[binary]>=3.3.3",

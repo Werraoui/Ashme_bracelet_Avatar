@@ -22,11 +22,10 @@ class SupabaseService {
     return _api.getLatestPrediction(userId);
   }
 
-  Future<List<Map<String, dynamic>>> getAlertes() async {
+  Future<List<Alerte>> getAlertes() async {
     final userId = await _api.getUserId();
     if (userId == null) throw Exception('Not authenticated');
-    final alerts = await _api.getAlerts(userId);
-    return alerts.map((a) => a.toMap()).toList();
+    return _api.getAlerts(userId);
   }
 
   Future<UserModel?> getUserById(int userId) async {

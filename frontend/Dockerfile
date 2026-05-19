@@ -12,7 +12,7 @@ COPY . .
 # Build for web (can be served by nginx or similar)
 # For Android APK, this step must be replaced by a local build:
 #   flutter build apk --release
-RUN flutter build web --release --dart-define=API_BASE_URL=http://localhost:8000
+RUN flutter build web --release --dart-define=API_BASE_URL=https://ashme-bracelet-avatar.onrender.com
 
 # ── Serve with nginx ──────────────────────────────────────────────────────────
 FROM nginx:alpine

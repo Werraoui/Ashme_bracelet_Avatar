@@ -1,22 +1,21 @@
-FROM python:3.10
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# install system tools
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# install uv
-RUN curl -Ls https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
-# copy project
-COPY . .
+COPY pyproject.toml uv.lock* ./
+COPY app ./app
+COPY AI_model ./AI_model
+COPY main.py ./
 
-# install dependencies using uv
 RUN uv pip install --system .
 
-# HF Spaces port
-EXPOSE 7860
+ENV PORT=8000
+EXPOSE 8000
 
-# run FastAPI (CHANGE if your file is not app.py)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

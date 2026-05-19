@@ -61,7 +61,7 @@ class _AlertesScreenState extends State<AlertesScreen> with TickerProviderStateM
     try {
       final data = await _service.getAlertes();
       setState(() {
-        alertes = data.map((e) => Alerte.fromApiJson(e)).toList();
+        alertes = data;
         isLoading = false;
       });
       _fadeCtrl.forward(from: 0);
