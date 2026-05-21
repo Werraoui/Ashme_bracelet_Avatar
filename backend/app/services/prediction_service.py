@@ -74,23 +74,36 @@ def predict_risk(
     }
 
 
+def _max_severity(a: StatusPredictEnum, b: StatusPredictEnum) -> StatusPredictEnum:
+    """Keep the most severe status (critical > warning > normal)."""
+    order = {
+        StatusPredictEnum.normal: 0,
+        StatusPredictEnum.warning: 1,
+        StatusPredictEnum.critical: 2,
+    }
+    return a if order[a] >= order[b] else b
+
+
 def classify_reading_status(
     spo2: int | None,
     rr: int | None,
     hr: int | None,
 ) -> StatusPredictEnum:
     """
-    Classify a reading using the FCM model when all vitals are present.
-    Falls back to rule-based thresholds if the model is unavailable.
+    FCM model + medical rule thresholds.
+    Clinical rules can elevate ML output (e.g. SpO2 < 92 → critical even if FCM says warning).
     """
+    rule_status = _classify_risk_rules(spo2=spo2, rr=rr, hr=hr)
+
     if spo2 is not None and rr is not None and hr is not None:
         try:
             result = predict_risk(hr, rr, spo2)
-            return ml_label_to_status(result["risk_label"])
+            ml_status = ml_label_to_status(result["risk_label"])
+            return _max_severity(ml_status, rule_status)
         except Exception as exc:
             logger.warning("ML classification failed, using rules: %s", exc)
 
-    return _classify_risk_rules(spo2=spo2, rr=rr, hr=hr)
+    return rule_status
 
 
 def _classify_risk_rules(

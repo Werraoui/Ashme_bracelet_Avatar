@@ -8,6 +8,7 @@ import 'package:avatar_monitoring/services/api_service.dart';
 import 'package:avatar_monitoring/pages/login_page.dart';
 import 'package:avatar_monitoring/models/physio_data.dart';
 import 'package:avatar_monitoring/models/predict_model.dart';
+import 'package:avatar_monitoring/utils/risk_status.dart';
 import 'package:logger/logger.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -122,7 +123,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         });
         _fadeCtrl.forward(from: 0);
       }
-      await NotificationService().afficherSelonStatus(result.prediction.status_predict);
+      await NotificationService().afficherSelonStatus(
+        effectiveRiskStatus(physio: result.physio, prediction: result.prediction),
+      );
       _logger.i('IA sync OK: ${result.prediction.status_predict}');
     } catch (e) {
       _logger.w('bracelet IA sync: $e');
@@ -146,7 +149,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         if (mounted) {
           setState(() {
             if (newPhysio != null) physio = newPhysio;
-            if (newPrediction != null) prediction = newPrediction;
+            if (newPrediction != null &&
+                (newPhysio == null || newPrediction.id_physio == newPhysio.id)) {
+              prediction = newPrediction;
+            }
             errorMessage = null;
           });
         }
@@ -167,8 +173,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     }
   }
 
+  String get _displayStatus => effectiveRiskStatus(physio: physio, prediction: prediction);
+
   Color _riskColor() {
-    switch (prediction?.status_predict.toLowerCase()) {
+    switch (_displayStatus) {
       case 'critical': return _red;
       case 'warning': return _orange;
       default: return _green;
@@ -176,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   }
 
   String _riskLabel() {
-    switch (prediction?.status_predict.toLowerCase()) {
+    switch (_displayStatus) {
       case 'critical': return 'CRITIQUE';
       case 'warning': return 'ATTENTION';
       default: return 'NORMAL';
@@ -184,7 +192,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   }
 
   IconData _riskIcon() {
-    switch (prediction?.status_predict.toLowerCase()) {
+    switch (_displayStatus) {
       case 'critical': return Icons.emergency_rounded;
       case 'warning': return Icons.warning_amber_rounded;
       default: return Icons.check_circle_outline_rounded;
@@ -300,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     final riskColor = _riskColor();
     return AnimatedBuilder(
       animation: _pulseAnim,
-      builder: (_, child) => Transform.scale(scale: prediction?.status_predict == 'critical' ? _pulseAnim.value : 1.0, child: child),
+      builder: (_, child) => Transform.scale(scale: _displayStatus == 'critical' ? _pulseAnim.value : 1.0, child: child),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

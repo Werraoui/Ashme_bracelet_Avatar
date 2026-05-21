@@ -1,3 +1,11 @@
+String _parseStatus(dynamic raw) {
+  if (raw == null) return 'normal';
+  final s = raw.toString().toLowerCase();
+  if (s.contains('critical') || s.contains('critique')) return 'critical';
+  if (s.contains('warning') || s.contains('attention')) return 'warning';
+  return 'normal';
+}
+
 class PredictResult {
   final String id;
   final String id_user;
@@ -18,7 +26,7 @@ class PredictResult {
       id: json['id_predict']?.toString() ?? '0',
       id_user: json['id_user']?.toString() ?? '0',
       id_physio: json['id_physio']?.toString() ?? '0',
-      status_predict: json['status_predict']?.toString() ?? '',
+      status_predict: _parseStatus(json['status_predict']),
       createdAt: json['time_of_creation'] != null
           ? DateTime.tryParse(json['time_of_creation'].toString()) ?? DateTime.now()
           : DateTime.now(),
