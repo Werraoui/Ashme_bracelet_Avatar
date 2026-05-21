@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.prediction import PredictionOut
+
 
 class ReadingCreate(BaseModel):
     id_user: int = Field(ge=1)
@@ -20,3 +22,9 @@ class ReadingOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class ReadingProcessOut(BaseModel):
+    reading: ReadingOut
+    prediction: PredictionOut
+
+    model_config = {"from_attributes": True}

@@ -46,6 +46,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   String? errorMessage;
   int? _userId;
   Timer? _pollingTimer;
+  Timer? _braceletTimer;
+  bool _isSyncing = false;
 
   late AnimationController _pulseCtrl;
   late AnimationController _ringCtrl;
@@ -68,6 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
     _loadUserId().then((_) {
       _loadInitialData();
+      _startBraceletSync();
       _startPolling();
     });
   }
@@ -75,6 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _braceletTimer?.cancel();
     _pulseCtrl.dispose();
     _ringCtrl.dispose();
     _fadeCtrl.dispose();
@@ -88,18 +92,50 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
   void _loadInitialData() async {
     _logger.d('loadInitialData started');
+    await _syncBraceletWithAi(showError: true);
+    if (physio == null && prediction == null) {
+      try {
+        physio = await _service.getLatestPhysio();
+        prediction = await _service.getLatestPrediction();
+        if (mounted) {
+          setState(() => errorMessage = null);
+          _fadeCtrl.forward(from: 0);
+        }
+      } catch (e) {
+        _logger.e('loadInitialData error: $e');
+        if (mounted) setState(() => errorMessage = e.toString());
+      }
+    }
+  }
+
+  /// Envoie une mesure au backend → modèle FCM → enregistrement BDD.
+  Future<void> _syncBraceletWithAi({bool showError = false}) async {
+    if (_isSyncing) return;
+    _isSyncing = true;
     try {
-      physio = await _service.getLatestPhysio();
-      prediction = await _service.getLatestPrediction();
+      final result = await _service.syncBraceletWithAi();
       if (mounted) {
-        setState(() => errorMessage = null);
+        setState(() {
+          physio = result.physio;
+          prediction = result.prediction;
+          errorMessage = null;
+        });
         _fadeCtrl.forward(from: 0);
       }
-      await NotificationService().afficherSelonStatus(prediction?.status_predict);
+      await NotificationService().afficherSelonStatus(result.prediction.status_predict);
+      _logger.i('IA sync OK: ${result.prediction.status_predict}');
     } catch (e) {
-      _logger.e('loadInitialData error: $e');
-      if (mounted) setState(() => errorMessage = e.toString());
+      _logger.w('bracelet IA sync: $e');
+      if (showError && mounted) setState(() => errorMessage = e.toString());
+    } finally {
+      _isSyncing = false;
     }
+  }
+
+  void _startBraceletSync() {
+    _braceletTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _syncBraceletWithAi();
+    });
   }
 
   void _startPolling() {
@@ -109,12 +145,11 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         final newPrediction = await _service.getLatestPrediction();
         if (mounted) {
           setState(() {
-            physio = newPhysio;
-            prediction = newPrediction;
+            if (newPhysio != null) physio = newPhysio;
+            if (newPrediction != null) prediction = newPrediction;
             errorMessage = null;
           });
         }
-        await NotificationService().afficherSelonStatus(newPrediction?.status_predict);
       } catch (e) {
         _logger.w('polling error: $e');
       }
@@ -256,7 +291,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             const Icon(Icons.wifi_off_rounded, color: _ember, size: 20),
             const SizedBox(width: 12),
             Expanded(child: Text('Connexion impossible\n$errorMessage', style: const TextStyle(color: _ember, fontSize: 12))),
-            GestureDetector(onTap: _loadInitialData, child: const Icon(Icons.refresh_rounded, color: _ember, size: 18)),
+            GestureDetector(onTap: _syncBraceletWithAi, child: const Icon(Icons.refresh_rounded, color: _ember, size: 18)),
           ],
         ),
       );
@@ -362,14 +397,19 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         children: [
           const Icon(Icons.sync_rounded, color: _muted, size: 16),
           const SizedBox(width: 10),
-          Text('Actualisation automatique toutes les 5s', style: TextStyle(color: _muted, fontSize: 12)),
+          Text(
+            _isSyncing
+                ? 'Analyse IA en cours…'
+                : 'Bracelet → IA toutes les 30s · affichage 5s',
+            style: TextStyle(color: _muted, fontSize: 12),
+          ),
           const Spacer(),
           GestureDetector(
-            onTap: _loadInitialData,
+            onTap: () => _syncBraceletWithAi(showError: true),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: _cyan.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: _cyan.withOpacity(0.3))),
-              child: Text('Rafraîchir', style: TextStyle(color: _cyan, fontSize: 11, fontWeight: FontWeight.w600)),
+              child: Text('Analyser IA', style: TextStyle(color: _cyan, fontSize: 11, fontWeight: FontWeight.w600)),
             ),
           ),
         ],

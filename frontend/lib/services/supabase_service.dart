@@ -1,4 +1,5 @@
 import 'api_service.dart';
+import 'bracelet_service.dart';
 import '../models/physio_data.dart';
 import '../models/predict_model.dart';
 import '../models/alerte_model.dart';
@@ -9,6 +10,12 @@ import '../models/user_model.dart';
 /// backend through [ApiService] without any Supabase dependency.
 class SupabaseService {
   final _api = ApiService();
+  final _bracelet = BraceletService();
+
+  /// Bracelet → API Render → modèle FCM → Supabase (physio + predic_results).
+  Future<({PhysioData physio, PredictResult prediction})> syncBraceletWithAi() {
+    return _bracelet.syncReadingToAi();
+  }
 
   Future<PhysioData?> getLatestPhysio() async {
     final userId = await _api.getUserId();

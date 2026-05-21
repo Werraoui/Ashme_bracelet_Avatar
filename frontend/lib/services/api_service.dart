@@ -152,9 +152,8 @@ class ApiService {
     return data.map((e) => PhysioData.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  /// Envoie une nouvelle mesure physiologique.
-  /// Le backend classifie automatiquement le risque et crée les alertes si nécessaire.
-  Future<Map<String, dynamic>> postReading({
+  /// Envoie une mesure → backend exécute le modèle IA et enregistre en base.
+  Future<({PhysioData physio, PredictResult prediction})> postReadingWithPrediction({
     required int userId,
     required int spo2,
     required int heartRate,
@@ -172,7 +171,21 @@ class ApiService {
       }),
     );
     _assertSuccess(response, expected: 201);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final readingJson = data['reading'] as Map<String, dynamic>? ?? data;
+    final predictionJson = data['prediction'] as Map<String, dynamic>?;
+    final physio = PhysioData.fromJson(readingJson);
+    if (predictionJson != null) {
+      return (
+        physio: physio,
+        prediction: PredictResult.fromJson(predictionJson),
+      );
+    }
+    final pred = await getLatestPrediction(userId);
+    if (pred == null) {
+      throw Exception('Prédiction IA introuvable après envoi de la mesure');
+    }
+    return (physio: physio, prediction: pred);
   }
 
   // ── Predictions ──────────────────────────────────────────────────────────────
