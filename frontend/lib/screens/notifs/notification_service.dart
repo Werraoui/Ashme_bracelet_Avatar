@@ -26,7 +26,10 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _notifications.initialize(initSettings);
+    await _notifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {},
+    );
 
     // Request permissions on Android 13+
     await _notifications
@@ -63,7 +66,13 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _notifications.show(id, title, body, details, payload: payload);
+    await _notifications.show(
+      id,
+      title,
+      body,
+      details,
+      payload: payload,
+);
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
