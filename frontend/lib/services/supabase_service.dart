@@ -13,7 +13,8 @@ class SupabaseService {
   final _bracelet = BraceletService();
 
   /// Bracelet → API Render → modèle FCM → Supabase (physio + predic_results).
-  Future<({PhysioData physio, PredictResult prediction})> syncBraceletWithAi() {
+  Future<({PhysioData physio, PredictResult prediction, List<Alerte> alerts})>
+      syncBraceletWithAi() {
     return _bracelet.syncReadingToAi();
   }
 

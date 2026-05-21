@@ -20,7 +20,11 @@ def add_reading(
     if current_user.id_user != payload.id_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     result = process_reading(db, payload)
-    return ReadingProcessOut(reading=result.reading, prediction=result.prediction)
+    return ReadingProcessOut(
+        reading=result.reading,
+        prediction=result.prediction,
+        alerts=result.alerts,
+    )
 
 
 @readings_route.get("/latest/{id_user}", response_model=ReadingOut)

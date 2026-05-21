@@ -6,6 +6,7 @@ import 'package:avatar_monitoring/screens/profil/profil_screen.dart';
 import 'package:avatar_monitoring/services/supabase_service.dart';
 import 'package:avatar_monitoring/services/api_service.dart';
 import 'package:avatar_monitoring/pages/login_page.dart';
+import 'package:avatar_monitoring/models/alerte_model.dart';
 import 'package:avatar_monitoring/models/physio_data.dart';
 import 'package:avatar_monitoring/models/predict_model.dart';
 import 'package:avatar_monitoring/utils/risk_status.dart';
@@ -126,6 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       await NotificationService().afficherSelonStatus(
         effectiveRiskStatus(physio: result.physio, prediction: result.prediction),
       );
+      _showEmailFeedback(result.alerts);
       _logger.i('IA sync OK: ${result.prediction.status_predict}');
     } catch (e) {
       _logger.w('bracelet IA sync: $e');
@@ -160,6 +162,50 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         _logger.w('polling error: $e');
       }
     });
+  }
+
+  void _showEmailFeedback(List<Alerte> alerts) {
+    if (!mounted) return;
+
+    if (alerts.isEmpty && _displayStatus == 'critical') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            'État CRITIQUE : ajoutez un contact « Très proche » avec une adresse email '
+            '(menu Contacts), puis relancez « Analyser IA ».',
+          ),
+          duration: Duration(seconds: 7),
+        ),
+      );
+      return;
+    }
+
+    final sent = alerts.where((a) => a.status == 'sent').length;
+    final failed = alerts.where((a) => a.status == 'failed').length;
+
+    String? msg;
+    Color? color;
+    if (sent > 0) {
+      msg =
+          'Email d\'alerte envoyé à $sent contact(s). Vérifiez la boîte de réception et les spams.';
+      color = _teal;
+    } else if (failed > 0) {
+      final err = alerts.first.errorMessage ??
+          'SMTP non configuré sur Render ou NOTIF_DRY_RUN=true';
+      msg = 'Email non envoyé : $err';
+      color = _ember;
+    }
+    if (msg == null || color == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: color.withOpacity(0.15),
+        content: Text(msg, style: TextStyle(color: color, fontSize: 12)),
+        duration: const Duration(seconds: 7),
+      ),
+    );
   }
 
   void _logout() async {

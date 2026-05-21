@@ -38,7 +38,10 @@ def send_alert_notification(
     }
 
     if dry_run:
-        return "dry-run", f"mock-{uuid4()}"
+        raise NotificationSendError(
+            "NOTIF_DRY_RUN est activé sur le serveur : aucun email réel n'est envoyé. "
+            "Mettez NOTIF_DRY_RUN=false sur Render et configurez SMTP_*."
+        )
 
     if to_email:
         try:

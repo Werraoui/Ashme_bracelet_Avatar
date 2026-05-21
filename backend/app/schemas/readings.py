@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.alert import AlertOut
 from app.schemas.prediction import PredictionOut
 
 
@@ -26,5 +27,6 @@ class ReadingOut(BaseModel):
 class ReadingProcessOut(BaseModel):
     reading: ReadingOut
     prediction: PredictionOut
+    alerts: list[AlertOut] = []
 
     model_config = {"from_attributes": True}

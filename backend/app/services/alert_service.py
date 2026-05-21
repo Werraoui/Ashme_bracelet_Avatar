@@ -79,20 +79,37 @@ def escalate_stage(
             if not contact:
                 continue
 
-            # Token used by contacts to acknowledge via email link.
             if not a.ack_token:
                 a.ack_token = secrets.token_urlsafe(24)
 
-            subject = f"Asthma alert ({prediction.status_predict.value.upper()})"
+            if not contact.email_contact and not contact.phone_contact:
+                a.status = "failed"
+                a.failed_at = datetime.now(timezone.utc)
+                a.error_message = "Contact sans email ni téléphone — impossible d'envoyer l'alerte"
+                continue
+
+            status_fr = {
+                "critical": "CRITIQUE",
+                "warning": "ATTENTION",
+                "normal": "NORMAL",
+            }.get(prediction.status_predict.value, prediction.status_predict.value.upper())
+
+            subject = f"🚨 AVATAR — Alerte asthme {status_fr}"
             message = (
-                f"Asthma Alert ({prediction.status_predict.value.upper()}) for user {prediction.id_user}.\n"
-                "Please check on them."
+                f"Alerte AVATAR ({status_fr})\n\n"
+                f"Le patient (compte #{prediction.id_user}) présente des signes nécessitant votre attention.\n"
+                f"Merci de prendre contact rapidement.\n"
             )
             try:
                 base = os.getenv("PUBLIC_BASE_URL")
                 if base:
                     ack_link = f"{base.rstrip('/')}/alerts/ack-link/{a.ack_token}"
-                    message = message + f"\n\nAcknowledge / Stop escalation:\n{ack_link}\n"
+                    message = message + f"\nAccuser réception / arrêter l'escalade :\n{ack_link}\n"
+                elif contact.email_contact:
+                    a.error_message = (
+                        (a.error_message or "")
+                        + " PUBLIC_BASE_URL non configuré sur le serveur (lien d'accusé absent)."
+                    ).strip()
 
                 provider, provider_message_id = send_alert_notification(
                     to_email=contact.email_contact,

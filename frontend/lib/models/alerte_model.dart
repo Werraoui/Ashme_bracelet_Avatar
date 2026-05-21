@@ -7,6 +7,7 @@ class Alerte {
   final DateTime timeOfAlert;
   final String? stage;
   final String? status;
+  final String? errorMessage;
 
   Alerte({
     required this.id,
@@ -17,6 +18,7 @@ class Alerte {
     required this.timeOfAlert,
     this.stage,
     this.status,
+    this.errorMessage,
   });
 
   /// Build from the Supabase joined response (legacy).
@@ -47,6 +49,7 @@ class Alerte {
           : DateTime.now(),
       stage: json['stage']?.toString(),
       status: json['status']?.toString(),
+      errorMessage: json['error_message']?.toString(),
     );
   }
 

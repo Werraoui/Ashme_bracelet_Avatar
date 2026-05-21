@@ -128,8 +128,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
               _field(phoneCtrl, 'Téléphone *', Icons.phone_outlined,
                   keyboardType: TextInputType.phone),
               const SizedBox(height: 12),
-              _field(emailCtrl, 'Email (optionnel)', Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress),
+              _field(
+                emailCtrl,
+                relation == 'very close'
+                    ? 'Email * (alertes critiques)'
+                    : 'Email (optionnel)',
+                Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              if (relation == 'very close')
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: Text(
+                    'En cas d\'alerte CRITIQUE, un email est envoyé à ce contact.',
+                    style: TextStyle(color: _muted, fontSize: 10),
+                  ),
+                ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: relation,
@@ -166,6 +180,16 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     phoneCtrl.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Nom et téléphone obligatoires'),
+                    backgroundColor: _ember,
+                  ));
+                  return;
+                }
+                if (relation == 'very close' &&
+                    emailCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text(
+                      'Email obligatoire pour un contact « Très proche » (alertes par mail)',
+                    ),
                     backgroundColor: _ember,
                   ));
                   return;

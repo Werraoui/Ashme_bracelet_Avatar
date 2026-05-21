@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'api_service.dart';
+import '../models/alerte_model.dart';
 import '../models/physio_data.dart';
 import '../models/predict_model.dart';
 
@@ -37,7 +38,8 @@ class BraceletService {
   }
 
   /// POST /readings : enregistre physio_variables + lance le modèle FCM + predic_results.
-  Future<({PhysioData physio, PredictResult prediction})> syncReadingToAi({
+  Future<({PhysioData physio, PredictResult prediction, List<Alerte> alerts})>
+      syncReadingToAi({
     int? spo2,
     int? heartRate,
     int? respiratoryRate,

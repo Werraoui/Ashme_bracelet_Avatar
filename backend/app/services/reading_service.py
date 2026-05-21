@@ -69,6 +69,12 @@ def process_reading(db: Session, payload: ReadingCreate) -> ReadingProcessResult
 
     escalation_group_id = uuid4()
     notify = status == StatusPredictEnum.critical
+    if status == StatusPredictEnum.critical:
+        logger.info(
+            "Critical reading id_physio=%s — email notify=%s",
+            reading.id_physio,
+            notify,
+        )
     alerts_created = escalate_stage(
         db,
         prediction=prediction,
@@ -76,4 +82,9 @@ def process_reading(db: Session, payload: ReadingCreate) -> ReadingProcessResult
         stage=1,
         notify=notify,
     )
+    if status == StatusPredictEnum.critical and not alerts_created:
+        logger.warning(
+            "Aucune alerte créée pour id_user=%s — ajoutez un contact « très proche » avec email",
+            reading.id_user,
+        )
     return ReadingProcessResult(reading=reading, prediction=prediction, alerts=alerts_created)

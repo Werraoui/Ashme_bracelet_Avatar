@@ -275,6 +275,20 @@ class _AlertCard extends StatelessWidget {
                   _formatDate(alerte.timeOfAlert),
                   style: const TextStyle(color: AvatarTheme.muted, fontSize: 11, fontFamily: 'monospace'),
                 ),
+                if (alerte.status == 'failed' && alerte.errorMessage != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    alerte.errorMessage!,
+                    style: const TextStyle(color: AvatarTheme.ember, fontSize: 10),
+                  ),
+                ],
+                if (alerte.status == 'sent') ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Email envoyé — vérifiez aussi les spams',
+                    style: TextStyle(color: AvatarTheme.teal, fontSize: 10),
+                  ),
+                ],
               ],
             ),
           ),
